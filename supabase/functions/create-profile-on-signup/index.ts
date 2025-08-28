@@ -9,14 +9,44 @@ serve(async (req) => {
     );
 
     const { record: user } = await req.json();
+    const userData = user.raw_user_meta_data;
 
-    const { error } = await supabaseAdmin.from('profiles').insert({
-      id: user.id,
-      full_name: user.raw_user_meta_data.full_name,
-      role: 'Student', // Default role
-    });
+    // --- Step 1: Create the user's profile ---
+    const { error: profileError } = await supabaseAdmin
+      .from('profiles')
+      .insert({
+        id: user.id,
+        full_name: userData?.full_name ?? null,
+        section: userData?.section ?? null,
+        university_id: userData?.university_id ?? null,
+        role: 'Student',
+      });
 
-    if (error) throw error;
+    if (profileError) throw profileError;
+
+    // --- Step 2: Find classes that match the user's section (CASE-INSENSITIVE) ---
+    if (userData?.section) {
+      const { data: classes, error: classesError } = await supabaseAdmin
+        .from('classes')
+        .select('id')
+        .ilike('section', userData.section); // Changed .eq to .ilike
+
+      if (classesError) throw classesError;
+
+      // --- Step 3: Enroll the user in all found classes ---
+      if (classes && classes.length > 0) {
+        const memberships = classes.map((classItem) => ({
+          profile_id: user.id,
+          class_id: classItem.id,
+        }));
+
+        const { error: membershipError } = await supabaseAdmin
+          .from('class_members')
+          .insert(memberships);
+
+        if (membershipError) throw membershipError;
+      }
+    }
 
     return new Response(JSON.stringify({ success: true }), {
       headers: { 'Content-Type': 'application/json' },

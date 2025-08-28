@@ -1,4 +1,3 @@
-// app/(auth)/signup.tsx
 import { Link } from 'expo-router';
 import React, { useState } from 'react';
 import {
@@ -14,6 +13,8 @@ export default function SignUp() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
+  const [section, setSection] = useState('');
+  const [universityId, setUniversityId] = useState(''); // Add state for University ID
   const [loading, setLoading] = useState(false);
 
   async function handleSignUp() {
@@ -22,9 +23,11 @@ export default function SignUp() {
       email: email,
       password: password,
       options: {
-        // You can pass user metadata here, which can be used in your trigger
+        // Pass all user details as metadata
         data: {
           full_name: fullName,
+          section: section,
+          university_id: universityId, // Pass the new ID
         },
       },
     });
@@ -32,8 +35,6 @@ export default function SignUp() {
     if (error) {
       Alert.alert('Sign Up Error', error.message);
     } else if (!data.session) {
-      // Supabase sends a confirmation email by default.
-      // The user is signed up but needs to verify their email.
       Alert.alert(
         'Sign Up Successful!',
         'Please check your inbox for an email verification link.'
@@ -54,6 +55,22 @@ export default function SignUp() {
         onChangeText={setFullName}
         className="bg-surface text-foreground p-4 rounded-lg mb-4 border border-border"
         placeholderTextColor="#94a3b8"
+      />
+      <TextInput
+        placeholder="University ID"
+        value={universityId}
+        onChangeText={setUniversityId}
+        className="bg-surface text-foreground p-4 rounded-lg mb-4 border border-border"
+        placeholderTextColor="#94a3b8"
+        autoCapitalize="characters"
+      />
+      <TextInput
+        placeholder="Section (e.g., 212A)"
+        value={section}
+        onChangeText={setSection}
+        className="bg-surface text-foreground p-4 rounded-lg mb-4 border border-border"
+        placeholderTextColor="#94a3b8"
+        autoCapitalize="characters"
       />
       <TextInput
         placeholder="Email"
