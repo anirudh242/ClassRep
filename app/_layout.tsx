@@ -6,45 +6,43 @@ import { AuthProvider, useAuth } from '../context/AuthContext';
 import '../global.css';
 
 /**
- * This hook handles navigation based on auth state and loading status.
+ * This hook handles navigation based on the real Supabase session.
  */
 function useProtectedRoute() {
-  const { user, loading } = useAuth();
+  // We now get the 'session' object from our context
+  const { session, loading } = useAuth();
   const segments = useSegments();
   const router = useRouter();
 
   useEffect(() => {
-    // Do nothing until the auth state is done loading.
+    // Do nothing until the session is done loading.
     if (loading) {
       return;
     }
 
     const inAuthGroup = segments[0] === '(auth)';
 
-    if (!user && !inAuthGroup) {
-      // Redirect to the login page if the user is not signed in
-      // and not in the auth group.
+    if (!session && !inAuthGroup) {
+      // Redirect to the login page if the user has no session
+      // and is not in the auth group.
       router.replace('/login');
-    } else if (user && inAuthGroup) {
-      // Redirect to the main app if the user is signed in
-      // and in the auth group.
+    } else if (session && inAuthGroup) {
+      // Redirect to the main app if the user has a session
+      // and is in the auth group.
       router.replace('/');
     }
-  }, [user, loading, segments, router]); // Re-run the effect when auth state changes
+  }, [session, loading, segments, router]); // Re-run the effect when the session changes
 }
 
 /**
  * The main navigation component.
- * It now renders a loading screen *or* the navigator.
  */
 function RootLayoutNav() {
   const { loading } = useAuth();
 
   useProtectedRoute();
 
-  // The navigator is now wrapped. It will only attempt to render
-  // its children *after* the loading is complete.
-  // A Slot or a simple loading screen can be shown initially.
+  // Show a loading screen while the session is being checked.
   if (loading) {
     return (
       <View className="flex-1 items-center justify-center bg-background">
