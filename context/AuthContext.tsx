@@ -1,11 +1,18 @@
-// context/AuthContext.tsx
 import { Session } from '@supabase/supabase-js';
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 
-// The context will now provide the real Supabase session object
+export interface Profile {
+  id: string;
+  full_name: string;
+  role: 'CR' | 'Student';
+  university_id: string;
+  section: string;
+}
+
 interface AuthContextType {
   session: Session | null;
+  profile: Profile | null;
   loading: boolean;
 }
 
@@ -21,29 +28,49 @@ export function useAuth() {
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
+  const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // This runs once when the app loads to check for an existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    // Check for an existing session
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
       setSession(session);
+      if (session) {
+        // If a session exists, fetch the user's profile
+        const { data } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', session.user.id)
+          .single();
+        setProfile(data);
+      }
       setLoading(false);
     });
 
-    // This sets up a listener that updates the session in real-time
-    // whenever the user logs in or out.
+    // Listen for auth state changes
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
+    } = supabase.auth.onAuthStateChange(async (_event, session) => {
       setSession(session);
+      if (session) {
+        // If the user logs in, fetch their profile
+        const { data } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', session.user.id)
+          .single();
+        setProfile(data);
+      } else {
+        // If the user logs out, clear their profile
+        setProfile(null);
+      }
     });
 
-    // This cleans up the listener when the component unmounts
     return () => subscription.unsubscribe();
   }, []);
 
   return (
-    <AuthContext.Provider value={{ session, loading }}>
+    <AuthContext.Provider value={{ session, profile, loading }}>
       {children}
     </AuthContext.Provider>
   );

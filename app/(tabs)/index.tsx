@@ -1,6 +1,5 @@
-// app/(tabs)/index.tsx
-import ClassCard from '@/components/ClassCard';
-import React, { useEffect, useState } from 'react';
+import { useFocusEffect } from 'expo-router';
+import React, { useCallback, useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
@@ -8,6 +7,8 @@ import {
   Text,
   View,
 } from 'react-native';
+import ClassCard from '../../components/ClassCard';
+import FAB from '../../components/FAB';
 import { useAuth } from '../../context/AuthContext';
 import { supabase } from '../../lib/supabase';
 
@@ -19,31 +20,35 @@ type Class = {
 };
 
 export default function Dashboard() {
-  const { session } = useAuth();
+  const { session, profile } = useAuth();
   const [classes, setClasses] = useState<Class[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    if (!session?.user) return;
+  useFocusEffect(
+    useCallback(() => {
+      async function fetchClasses() {
+        if (!session?.user) {
+          setLoading(false);
+          return;
+        }
 
-    async function fetchClasses() {
-      setLoading(true);
+        setLoading(true);
+        const { data, error } = await supabase.rpc('get_user_classes', {
+          p_profile_id: session.user.id,
+        });
 
-      const { data, error } = await supabase.rpc('get_user_classes', {
-        p_profile_id: session.user.id,
-      });
-
-      if (data) {
-        setClasses(data);
+        if (data) {
+          setClasses(data);
+        }
+        if (error) {
+          console.error('Error fetching classes:', error.message);
+        }
+        setLoading(false);
       }
-      if (error) {
-        console.error('Error fetching classes:', error.message);
-      }
-      setLoading(false);
-    }
 
-    fetchClasses();
-  }, [session]);
+      fetchClasses();
+    }, [session])
+  );
 
   if (loading) {
     return (
@@ -56,9 +61,12 @@ export default function Dashboard() {
   return (
     <SafeAreaView className="flex-1 bg-background">
       <View className="p-4 flex-1">
-        <Text className="text-foreground text-3xl font-bold mb-4">
-          Your Classes
-        </Text>
+        <View className="flex-row justify-between items-center mb-4">
+          <Text className="text-foreground text-3xl font-bold">
+            Your Classes
+          </Text>
+        </View>
+
         <FlatList
           data={classes}
           renderItem={({ item }) => <ClassCard item={item} />}
@@ -70,6 +78,10 @@ export default function Dashboard() {
           )}
         />
       </View>
+
+      {profile?.role === 'CR' && (
+        <FAB href="/create-class" accessibilityLabel="Create new class" />
+      )}
     </SafeAreaView>
   );
 }
