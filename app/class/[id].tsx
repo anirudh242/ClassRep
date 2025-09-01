@@ -1,53 +1,101 @@
-import { useLocalSearchParams } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useFocusEffect, useLocalSearchParams } from 'expo-router';
+import { useCallback, useState } from 'react';
 import {
   ActivityIndicator,
+  Alert, // Import Alert
+  FlatList,
   SafeAreaView,
   Text,
   TouchableOpacity,
   View,
 } from 'react-native';
+import AnnouncementCard from '../../components/AnnouncementCard';
 import BackButton from '../../components/BackButton';
+import FAB from '../../components/FAB';
+import HomeworkCard from '../../components/HomeworkCard';
+import { useAuth } from '../../context/AuthContext';
 import { supabase } from '../../lib/supabase';
 
+// --- Type Definitions ---
 type ClassDetails = {
   id: string;
   name: string;
   section: string;
   class_code: string;
 };
+type Announcement = {
+  id: string;
+  content: string;
+  created_at: string;
+};
+type Assignment = {
+  id: string;
+  title: string;
+  description: string;
+  due_date: string;
+};
 
 export default function ClassDetailsPage() {
   const { id } = useLocalSearchParams();
+  const { profile } = useAuth();
   const [classInfo, setClassInfo] = useState<ClassDetails | null>(null);
+  const [announcements, setAnnouncements] = useState<Announcement[]>([]);
+  const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [loading, setLoading] = useState(true);
-  // State to track the active tab
   const [activeTab, setActiveTab] = useState<'announcements' | 'homework'>(
     'announcements'
   );
 
-  useEffect(() => {
+  const fetchClassData = useCallback(() => {
     if (!id) return;
-
-    async function fetchClassDetails() {
-      setLoading(true);
-      const { data, error } = await supabase
-        .from('classes')
+    setLoading(true);
+    Promise.all([
+      supabase.from('classes').select('*').eq('id', id).single(),
+      supabase
+        .from('announcements')
         .select('*')
-        .eq('id', id)
-        .single();
-
-      if (data) {
-        setClassInfo(data);
-      }
-      if (error) {
-        console.error('Error fetching class details:', error.message);
-      }
-      setLoading(false);
-    }
-
-    fetchClassDetails();
+        .eq('class_id', id)
+        .order('created_at', { ascending: false }),
+      supabase
+        .from('assignments')
+        .select('*')
+        .eq('class_id', id)
+        .order('due_date', { ascending: true }),
+    ])
+      .then(([classResult, announcementsResult, assignmentsResult]) => {
+        if (classResult.data) setClassInfo(classResult.data);
+        if (announcementsResult.data)
+          setAnnouncements(announcementsResult.data);
+        if (assignmentsResult.data) setAssignments(assignmentsResult.data);
+      })
+      .catch((error) => console.error('Error fetching data:', error))
+      .finally(() => setLoading(false));
   }, [id]);
+
+  useFocusEffect(fetchClassData);
+
+  // --- New Delete Function ---
+  async function handleDeleteAnnouncement(announcementId: string) {
+    // Optimistically update the UI for a fast response
+    setAnnouncements((currentAnnouncements) =>
+      currentAnnouncements.filter((ann) => ann.id !== announcementId)
+    );
+
+    // Call the database to delete the record
+    const { error } = await supabase
+      .from('announcements')
+      .delete()
+      .eq('id', announcementId);
+
+    if (error) {
+      // If the delete fails, show an error and refresh the data
+      Alert.alert(
+        'Error',
+        'Could not delete the announcement. Please try again.'
+      );
+      fetchClassData(); // Re-fetch to revert the optimistic update
+    }
+  }
 
   if (loading) {
     return (
@@ -60,22 +108,19 @@ export default function ClassDetailsPage() {
   return (
     <SafeAreaView className="flex-1 bg-background">
       <BackButton />
-      <View className="p-4 flex-1">
+      <View className="p-4 flex-1 pt-12">
         {classInfo ? (
           <>
-            <View className="pt-12">
+            <View>
               <Text className="text-foreground text-3xl font-bold">
                 {classInfo.name}
               </Text>
               <Text className="text-primary text-lg mb-4">
-                {classInfo.class_code ? classInfo.class_code + ' - ' : ''}
-                {''}
-                Section {classInfo.section}
+                {classInfo.class_code} - Section {classInfo.section}
               </Text>
             </View>
 
-            {/* --- Tab Switcher UI --- */}
-            <View className="flex-row mb-4">
+            <View className="flex-row my-4">
               <TouchableOpacity
                 onPress={() => setActiveTab('announcements')}
                 className={`flex-1 py-2 items-center border-b-2 ${activeTab === 'announcements' ? 'border-primary' : 'border-border'}`}
@@ -98,23 +143,55 @@ export default function ClassDetailsPage() {
               </TouchableOpacity>
             </View>
 
-            {/* --- Conditional Content Display --- */}
-            <View className="flex-1 justify-center items-center">
-              {activeTab === 'announcements' ? (
-                <Text className="text-foreground text-lg">
-                  Announcements will be shown here.
-                </Text>
-              ) : (
-                <Text className="text-foreground text-lg">
-                  Homework will be shown here.
-                </Text>
-              )}
-            </View>
+            {activeTab === 'announcements' ? (
+              <FlatList
+                data={announcements}
+                renderItem={({ item }) => (
+                  <AnnouncementCard
+                    item={item}
+                    profile={profile}
+                    onDelete={handleDeleteAnnouncement}
+                  />
+                )}
+                keyExtractor={(item) => item.id}
+                ListEmptyComponent={() => (
+                  <Text className="text-muted text-center mt-4">
+                    No announcements yet.
+                  </Text>
+                )}
+              />
+            ) : (
+              <FlatList
+                data={assignments}
+                renderItem={({ item }) => <HomeworkCard item={item} />}
+                keyExtractor={(item) => item.id}
+                ListEmptyComponent={() => (
+                  <Text className="text-muted text-center mt-4">
+                    No homework assigned yet.
+                  </Text>
+                )}
+              />
+            )}
           </>
         ) : (
           <Text className="text-muted text-center mt-20">Class not found.</Text>
         )}
       </View>
+
+      {profile?.role === 'CR' && (
+        <FAB
+          href={
+            activeTab === 'announcements'
+              ? `/create-announcement?classId=${id}`
+              : `/create-assignment?classId=${id}`
+          }
+          accessibilityLabel={
+            activeTab === 'announcements'
+              ? 'Create new announcement'
+              : 'Create new assignment'
+          }
+        />
+      )}
     </SafeAreaView>
   );
 }
