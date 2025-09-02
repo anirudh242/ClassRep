@@ -25,11 +25,11 @@ export default function SignUp() {
       email: email,
       password: password,
       options: {
-        // Pass all user details as metadata
+        // pass all user details as metadata
         data: {
           full_name: fullName,
           section: section,
-          university_id: universityId, // Pass the new ID
+          university_id: universityId,
         },
       },
     });

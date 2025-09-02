@@ -2,7 +2,7 @@ import { useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { useCallback, useState } from 'react';
 import {
   ActivityIndicator,
-  Alert, // Import Alert
+  Alert,
   FlatList,
   SafeAreaView,
   Text,
@@ -16,7 +16,6 @@ import HomeworkCard from '../../components/HomeworkCard';
 import { useAuth } from '../../context/AuthContext';
 import { supabase } from '../../lib/supabase';
 
-// --- Type Definitions ---
 type ClassDetails = {
   id: string;
   name: string;
@@ -74,26 +73,22 @@ export default function ClassDetailsPage() {
 
   useFocusEffect(fetchClassData);
 
-  // --- New Delete Function ---
   async function handleDeleteAnnouncement(announcementId: string) {
-    // Optimistically update the UI for a fast response
     setAnnouncements((currentAnnouncements) =>
       currentAnnouncements.filter((ann) => ann.id !== announcementId)
     );
 
-    // Call the database to delete the record
     const { error } = await supabase
       .from('announcements')
       .delete()
       .eq('id', announcementId);
 
     if (error) {
-      // If the delete fails, show an error and refresh the data
       Alert.alert(
         'Error',
         'Could not delete the announcement. Please try again.'
       );
-      fetchClassData(); // Re-fetch to revert the optimistic update
+      fetchClassData();
     }
   }
 

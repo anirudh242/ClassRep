@@ -51,7 +51,6 @@ export default function AnnouncementCard({
         </View>
       </TouchableOpacity>
 
-      {/* --- The Bottom Sheet Menu (Modal) --- */}
       <Modal
         animationType="slide"
         transparent={true}

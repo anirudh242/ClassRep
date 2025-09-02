@@ -1,13 +1,11 @@
-// components/FAB.tsx
-import { Ionicons } from '@expo/vector-icons'; // For the '+' icon
+import { Ionicons } from '@expo/vector-icons';
 import { Link } from 'expo-router';
 import React from 'react';
 import { TouchableOpacity } from 'react-native';
 
-// Props for the FAB component
 interface FABProps {
-  href: string; // The destination link
-  accessibilityLabel: string; // For screen readers
+  href: string;
+  accessibilityLabel: string;
 }
 
 export default function FAB({ href, accessibilityLabel }: FABProps) {

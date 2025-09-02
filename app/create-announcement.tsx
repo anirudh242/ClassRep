@@ -6,7 +6,7 @@ import {
   SafeAreaView,
   Text,
   TextInput,
-  TouchableOpacity, // Import Keyboard
+  TouchableOpacity,
   TouchableWithoutFeedback,
   View,
 } from 'react-native';
@@ -44,7 +44,6 @@ export default function CreateAnnouncementPage() {
   }
 
   return (
-    // This wrapper will detect any tap outside of the inputs
     <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
       <SafeAreaView className="flex-1 bg-background justify-center">
         <BackButton />

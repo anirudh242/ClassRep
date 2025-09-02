@@ -24,7 +24,6 @@ export default function CreateAssignmentPage() {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [dueDate, setDueDate] = useState(new Date());
-  // The default value for the toggle is now 'false'
   const [requiresFile, setRequiresFile] = useState(false);
   const [isDatePickerVisible, setDatePickerVisible] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -33,7 +32,6 @@ export default function CreateAssignmentPage() {
     const currentDate = selectedDate || dueDate;
     // For iOS, the modal needs to be closed manually
     if (Platform.OS === 'ios') {
-      // No change needed here, the done button handles closing
     } else {
       setDatePickerVisible(false);
     }

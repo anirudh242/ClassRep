@@ -1,13 +1,11 @@
 import React from 'react';
 import { SafeAreaView, Text, TouchableOpacity, View } from 'react-native';
 import { useAuth } from '../../context/AuthContext';
-import { supabase } from '../../lib/supabase'; // Import your Supabase client
+import { supabase } from '../../lib/supabase';
 
 export default function Profile() {
-  // Get the real session object from the context
   const { session } = useAuth();
 
-  // This function will handle the sign-out process
   async function handleLogout() {
     await supabase.auth.signOut();
   }
@@ -18,7 +16,7 @@ export default function Profile() {
         <View className="bg-surface w-full p-6 rounded-lg items-center border border-border">
           <Text className="text-foreground text-2xl font-bold">Profile</Text>
 
-          {/* Display the user's email from the session */}
+          {/* display user email */}
           {session?.user && (
             <Text className="text-muted text-lg mt-2">
               {session.user.email}
@@ -26,7 +24,7 @@ export default function Profile() {
           )}
         </View>
 
-        {/* A functional Log Out button */}
+        {/* logout */}
         <TouchableOpacity
           onPress={handleLogout}
           className="bg-primary w-full p-4 rounded-lg mt-8"

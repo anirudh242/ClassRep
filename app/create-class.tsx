@@ -8,7 +8,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import BackButton from '../components/BackButton'; // Import the BackButton
+import BackButton from '../components/BackButton';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabase';
 
@@ -33,7 +33,7 @@ export default function CreateClassPage() {
 
     setLoading(true);
 
-    // Step 1: Insert the new class and get its data back
+    // insert the new class and get its data back
     const { data: newClass, error: classError } = await supabase
       .from('classes')
       .insert({
@@ -51,7 +51,7 @@ export default function CreateClassPage() {
       return;
     }
 
-    // Step 2: Find all users in the same section as the CR
+    // find all users in the same section as the CR
     const { data: sectionMembers, error: membersError } = await supabase
       .from('profiles')
       .select('id')
@@ -63,7 +63,7 @@ export default function CreateClassPage() {
       return;
     }
 
-    // Step 3: Automatically enroll all section members in the new class
+    // automatically enroll all section members in the new class
     if (newClass && sectionMembers.length > 0) {
       const memberships = sectionMembers.map((member) => ({
         class_id: newClass.id,

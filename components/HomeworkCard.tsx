@@ -4,7 +4,7 @@ import React from 'react';
 import { Text, TouchableOpacity, View } from 'react-native';
 
 type Assignment = {
-  id: string; // The 'id' is needed for the link
+  id: string;
   title: string;
   description: string;
   due_date: string;
@@ -12,8 +12,6 @@ type Assignment = {
 
 export default function HomeworkCard({ item }: { item: Assignment }) {
   return (
-    // The Link component handles navigation. The 'as any' is a temporary
-    // workaround for a TypeScript typing issue with Expo Router.
     <Link href={`/homework/${item.id}` as any} asChild>
       <TouchableOpacity>
         <View className="bg-surface p-4 rounded-lg mb-4 border border-border">

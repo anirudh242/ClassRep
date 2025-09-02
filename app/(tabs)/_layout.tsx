@@ -1,4 +1,3 @@
-// app/(tabs)/_layout.tsx
 import { Ionicons } from '@expo/vector-icons';
 import { Tabs } from 'expo-router';
 import React from 'react';
@@ -8,16 +7,16 @@ export default function TabLayout() {
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: '#dc2626', // Your 'primary' red
-        tabBarInactiveTintColor: '#94a3b8', // Your 'muted' gray
+        tabBarActiveTintColor: '#dc2626',
+        tabBarInactiveTintColor: '#94a3b8',
         tabBarStyle: {
-          backgroundColor: '#0f172a', // Your 'background' color
+          backgroundColor: '#0f172a',
           borderTopWidth: 0,
         },
       }}
     >
       <Tabs.Screen
-        name="index" // Links to app/(tabs)/index.tsx
+        name="index"
         options={{
           title: 'Dashboard',
           tabBarIcon: ({ color }) => (
@@ -26,7 +25,7 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="profile" // Links to app/(tabs)/profile.tsx
+        name="profile"
         options={{
           title: 'Profile',
           tabBarIcon: ({ color }) => (
